@@ -1,4 +1,5 @@
 name: Deploy Moodle via rsync
+# Fixed: ensure script lines are not wrapped; keep flags on same line to avoid YAML errors
 
 on:
   workflow_dispatch:
