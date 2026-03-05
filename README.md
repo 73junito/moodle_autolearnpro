@@ -38,3 +38,35 @@ When triggering `deploy-moodle-rsync.yml` via *workflow_dispatch*:
 - `run_upgrade: false` — skip DB upgrade
 
 If you want a longer explanation or an example layout for deploy paths and secrets, tell me and I'll add it.
+
+## Deployment via GitHub Actions
+
+This repository includes automated deployment workflows under `.github/workflows/`.
+
+### Required Secrets
+Set these in GitHub → Settings → Secrets and variables → Actions:
+
+- `SSH_HOST` — server hostname or IP
+- `SSH_USER` — SSH user with sudo access for deploy commands
+- `SSH_PRIVATE_KEY` — private key for `SSH_USER` (PEM format)
+- `SSH_PORT` — optional (defaults to 22)
+
+### Running a Deployment
+You can trigger a deploy in two ways:
+
+1. Push to `main`
+	- Automatically runs the full rsync deployment workflow.
+
+2. Manual trigger (workflow_dispatch)
+	- Go to GitHub → Actions → *Deploy Moodle (rsync + opcache reset + purge + upgrade)* → **Run workflow**.
+	- Optionally set the `run_upgrade` input to `true` to run Moodle's CLI upgrade after deployment.
+
+Example quick-run (via GitHub UI):
+
+```
+run_upgrade: true
+```
+
+Notes:
+- Keep `SSH_PRIVATE_KEY` safe; add the corresponding public key to `~/.ssh/authorized_keys` for `SSH_USER` on the server.
+- Ensure `SSH_USER` has passwordless sudo for the specific commands used by the workflows (`systemctl start moodle-opcache-reset.service`, running Moodle CLI as `www-data`).
