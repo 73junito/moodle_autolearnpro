@@ -1,0 +1,54 @@
+# Git and CI
+.git/
+.github/
+.gitignore
+.deployignore
+
+# Node / build artifacts
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+
+# Logs and caches
+*.log
+cache/
+localcache/
+muc/
+sessions/
+
+# Moodle data directories (never deploy these)
+moodledata/
+moodledata/*
+
+# Composer vendor (if not used)
+vendor/
+composer.lock
+
+# Backup files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.bak
+
+# Generic plugin/theme build artifacts (conservative additions)
+*/node_modules/
+*/dist/
+*/build/
+*/vendor/
+*/.sass-cache/
+*/.cache/
