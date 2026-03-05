@@ -1,0 +1,24 @@
+name: Deploy — Opcache Reset & Purge
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reset-and-purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reset opcache and purge Moodle caches on remote
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Reset PHP opcache via the systemd oneshot (runs as www-data)
+            sudo systemctl start moodle-opcache-reset.service || true
+            # Purge Moodle caches using CLI
+            sudo -u www-data php /var/www/html/moodle/admin/cli/purge_caches.php --no-interaction || true

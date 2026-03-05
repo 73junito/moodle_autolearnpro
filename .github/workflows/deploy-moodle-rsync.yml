@@ -1,0 +1,48 @@
+name: Deploy Moodle via rsync
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_upgrade:
+        description: 'Run Moodle DB upgrade after deploy (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rsync files to server
+        uses: burnett01/rsync-deployments@v4
+        with:
+          switches: -az --delete --exclude-from='.deployignore'
+          path: ./
+          remote_path: /var/www/html/moodle
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_user: ${{ secrets.SSH_USER }}
+          private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Reset opcache and purge caches on remote
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            sudo systemctl start moodle-opcache-reset.service || true
+            sudo -u www-data php /var/www/html/moodle/admin/cli/purge_caches.php --no-interaction || true
+
+      - name: Optional: Run Moodle DB upgrade
+        if: ${{ github.event.inputs.run_upgrade == 'true' }}
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            sudo -u www-data php /var/www/html/moodle/admin/cli/upgrade.php --non-interactive || true
