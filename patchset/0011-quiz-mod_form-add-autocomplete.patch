@@ -1,6 +1,0 @@
---- a/var/www/html/moodle/public/mod/quiz/mod_form.php
-+++ b/var/www/html/moodle/public/mod/quiz/mod_form.php
-@@
--        $mform->addElement('passwordunmask', 'quizpassword', get_string('requirepassword', 'quiz'));
-+        $mform->addElement('passwordunmask', 'quizpassword', get_string('requirepassword', 'quiz'), ['autocomplete' => 'current-password']);
-*** End Patch

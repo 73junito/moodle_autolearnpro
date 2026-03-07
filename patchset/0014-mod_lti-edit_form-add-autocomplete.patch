@@ -1,6 +1,0 @@
---- a/var/www/html/moodle/public/mod/lti/edit_form.php
-+++ b/var/www/html/moodle/public/mod/lti/edit_form.php
-@@
--            $mform->addElement('passwordunmask', 'lti_password', get_string('password_admin', 'lti'));
-+            $mform->addElement('passwordunmask', 'lti_password', get_string('password_admin', 'lti'), ['autocomplete' => 'current-password']);
-*** End Patch
