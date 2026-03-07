@@ -1,0 +1,26 @@
+*** Begin Patch
+*** Add File: /home/rod63/moodle_autolearnpro/patches/0015-assign-filemanager-accepted-types.patch
++*** Update File: /var/www/html/moodle/public/mod/assign/submission/file/locallib.php
++@@
++-        $fileoptions = [
++-            'subdirs' => false,
++-            'maxbytes' => $maxbytes,
++-            'maxfiles' => $maxfiles,
++-            'accepted_types' => $this->get_configured_typesets(),
++-        ];
+++        // Ensure an explicit accepted types value is present for the filemanager
+++        // so client-side templates can render an `accept` attribute when available.
+++        $acceptedtypes = $this->get_configured_typesets();
+++        if (empty($acceptedtypes)) {
+++            // Fall back to allowing all types (renderers may choose to omit accept).
+++            $acceptedtypes = '*';
+++        }
+++
+++        $fileoptions = [
+++            'subdirs' => false,
+++            'maxbytes' => $maxbytes,
+++            'maxfiles' => $maxfiles,
+++            'accepted_types' => $acceptedtypes,
+++        ];
++
+*** End Patch

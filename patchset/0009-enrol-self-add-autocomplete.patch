@@ -1,0 +1,6 @@
+--- a/var/www/html/moodle/public/enrol/self/lib.php
++++ b/var/www/html/moodle/public/enrol/self/lib.php
+@@
+-            $passattribs = ['size' => '20', 'maxlength' => '50'];
++            $passattribs = ['size' => '20', 'maxlength' => '50', 'autocomplete' => 'current-password'];
+*** End Patch
