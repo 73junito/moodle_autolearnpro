@@ -6,6 +6,10 @@ from pathlib import Path
 
 def load_module_from_path(path: str):
     spec = importlib.util.spec_from_file_location("automotive_lab_sim", path)
+    if spec is None:
+        raise ImportError(f"Cannot create a module spec for path: {path!r}")
+    if spec.loader is None:
+        raise ImportError(f"No loader found for module spec at path: {path!r}")
     mod = importlib.util.module_from_spec(spec)
     # Ensure the import machinery can find our fake requests module if present
     sys.modules[spec.name] = mod
