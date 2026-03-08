@@ -13,7 +13,7 @@ def load_module_from_path(path: str):
     return mod
 
 
-def test_simulation_state_reset_and_add_action(tmp_path):
+def test_simulation_state_reset_and_add_action():
     repo_root = Path(__file__).resolve().parents[1]
     mod_path = repo_root / "stable-diffusion-webui" / "extensions" / "automotive-lab-sim" / "scripts" / "automotive_lab_sim.py"
 
@@ -53,7 +53,7 @@ def test_simulation_state_reset_and_add_action(tmp_path):
     assert state.history[0]["action"] == "Check battery"
 
 
-def test_call_ollama_simulation_uses_requests_and_returns_content(tmp_path):
+def test_call_ollama_simulation_uses_requests_and_returns_content():
     repo_root = Path(__file__).resolve().parents[1]
     mod_path = repo_root / "stable-diffusion-webui" / "extensions" / "automotive-lab-sim" / "scripts" / "automotive_lab_sim.py"
 
