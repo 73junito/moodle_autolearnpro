@@ -214,12 +214,17 @@ class Script(scripts.Script):
 
     def ui(self, _is_img2img: bool):
         """Build and return the Gradio UI components for the extension."""
+        if gr is None:
+            raise RuntimeError(
+                "gradio is required to use the Automotive Lab Simulation Plugin UI. "
+                "Install it with: pip install gradio"
+            )
 
         scenarios = get_predefined_scenarios()
         scenario_keys = list(scenarios.keys())
         scenario_labels = [scenarios[k].title for k in scenario_keys]
 
-        sim_state = gr.State(SimulationState()) if gr is not None else None
+        sim_state = gr.State(SimulationState())
 
         with gr.Group():
             gr.Markdown("## Automotive Lab Simulation Plugin 🚗🔧")
@@ -227,7 +232,7 @@ class Script(scripts.Script):
                 "Simulate vehicle problems, choose diagnostic steps, and see realistic results."
             )
 
-            cuda_info = gr.Markdown(value=detect_cuda_info()) if gr is not None else None
+            cuda_info = gr.Markdown(value=detect_cuda_info())
 
             with gr.Row():
                 scenario_dropdown = gr.Dropdown(
@@ -333,28 +338,27 @@ class Script(scripts.Script):
             _state.solved = True
             return _state, msg, format_log(_state), "Simulation completed."
 
-        # Wire handlers (only if gradio is present)
-        if gr is not None:
-            start_button.click(
-                on_start_sim,
-                inputs=[scenario_dropdown, sim_state],
-                outputs=[scenario_info, sim_state, result_box, status_box],
-            )
-            run_action_button.click(
-                on_run_action,
-                inputs=[action_buttons, free_action, sim_state],
-                outputs=[sim_state, result_box, output_log, status_box],
-            )
-            hint_button.click(
-                on_hint,
-                inputs=[sim_state],
-                outputs=[sim_state, result_box, output_log, status_box],
-            )
-            solve_button.click(
-                on_solve,
-                inputs=[sim_state],
-                outputs=[sim_state, result_box, output_log, status_box],
-            )
+        # Wire handlers
+        start_button.click(
+            on_start_sim,
+            inputs=[scenario_dropdown, sim_state],
+            outputs=[scenario_info, sim_state, result_box, status_box],
+        )
+        run_action_button.click(
+            on_run_action,
+            inputs=[action_buttons, free_action, sim_state],
+            outputs=[sim_state, result_box, output_log, status_box],
+        )
+        hint_button.click(
+            on_hint,
+            inputs=[sim_state],
+            outputs=[sim_state, result_box, output_log, status_box],
+        )
+        solve_button.click(
+            on_solve,
+            inputs=[sim_state],
+            outputs=[sim_state, result_box, output_log, status_box],
+        )
 
         return [
             scenario_dropdown,
