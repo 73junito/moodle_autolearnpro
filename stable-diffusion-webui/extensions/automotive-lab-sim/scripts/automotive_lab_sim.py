@@ -206,7 +206,7 @@ class Script(scripts.Script):
 
         The argument is provided by the host but not used here.
         """
-        return scripts.AlwaysVisible
+        return scripts.Script.AlwaysVisible
 
     def ui(self, _is_img2img: bool):
         """Build and return the Gradio UI components for the extension."""
