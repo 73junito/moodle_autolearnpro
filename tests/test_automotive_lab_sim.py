@@ -1,6 +1,7 @@
 import importlib.util
 import sys
 import types
+import pytest
 from pathlib import Path
 
 
@@ -86,3 +87,35 @@ def test_call_ollama_simulation_uses_requests_and_returns_content(tmp_path):
     result = mod.call_ollama_simulation(scenario, state, "Inspect clamp", request_hint=False)
     assert isinstance(result, str)
     assert "Simulated result" in result
+
+
+def test_ui_raises_runtime_error_when_gradio_missing():
+    """ui() must raise RuntimeError with a helpful message when gradio is not installed."""
+    repo_root = Path(__file__).resolve().parents[1]
+    mod_path = (
+        repo_root
+        / "stable-diffusion-webui"
+        / "extensions"
+        / "automotive-lab-sim"
+        / "scripts"
+        / "automotive_lab_sim.py"
+    )
+
+    # Ensure requests stub is present so the module loads without error
+    fake_requests = types.ModuleType("requests")
+    fake_requests.post = lambda *a, **kw: None  # type: ignore[attr-defined]
+    sys.modules["requests"] = fake_requests
+
+    # Remove gradio from sys.modules so the module sees gr = None
+    sys.modules.pop("gradio", None)
+    # Also remove the cached module so it is re-loaded fresh
+    sys.modules.pop("automotive_lab_sim", None)
+
+    mod = load_module_from_path(str(mod_path))
+
+    # Force gr to None on the freshly loaded module
+    mod.gr = None  # type: ignore[attr-defined]
+
+    script = mod.Script()
+    with pytest.raises(RuntimeError, match="gradio is required"):
+        script.ui(False)
