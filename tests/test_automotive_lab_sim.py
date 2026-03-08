@@ -54,7 +54,39 @@ def test_simulation_state_reset_and_add_action(monkeypatch, tmp_path):
     assert state.history[0]["action"] == "Check battery"
 
 
-def test_call_ollama_simulation_uses_requests_and_returns_content(monkeypatch, tmp_path):
+def test_call_ollama_simulation_handles_request_error_without_exceptions_attr(tmp_path):
+    """Regression test: mocked requests without .exceptions must not raise AttributeError."""
+    repo_root = Path(__file__).resolve().parents[1]
+    mod_path = repo_root / "stable-diffusion-webui" / "extensions" / "automotive-lab-sim" / "scripts" / "automotive_lab_sim.py"
+
+    # Fake requests with NO .exceptions attribute – simulates the mocking scenario
+    # described in the code-review comment.
+    fake_requests = types.ModuleType("requests")
+
+    def failing_post(url, json=None, timeout=None):
+        raise OSError("connection refused")
+
+    fake_requests.post = failing_post
+    # Intentionally do NOT set fake_requests.exceptions
+    sys.modules["requests"] = fake_requests
+
+    mod = load_module_from_path(str(mod_path))
+
+    scenario = mod.SimulationScenario(
+        title="T3",
+        vehicle="Test Car",
+        symptom_summary="No start",
+        hidden_fault="Dead battery",
+    )
+    state = mod.SimulationState()
+
+    # Without the fix this would raise AttributeError; with the fix it returns an error string.
+    result = mod.call_ollama_simulation(scenario, state, "Check battery", request_hint=False)
+    assert isinstance(result, str)
+    assert "Error calling LLM" in result or "LLM" in result
+
+
+def test_call_ollama_simulation_uses_requests_and_returns_content(tmp_path):
     repo_root = Path(__file__).resolve().parents[1]
     mod_path = repo_root / "stable-diffusion-webui" / "extensions" / "automotive-lab-sim" / "scripts" / "automotive_lab_sim.py"
 
