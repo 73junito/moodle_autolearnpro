@@ -23,8 +23,12 @@ except (ImportError, ModuleNotFoundError):
 
 try:
     requests = importlib.import_module("requests")
+    _RequestException = getattr(
+        getattr(requests, "exceptions", None), "RequestException", Exception
+    )
 except (ImportError, ModuleNotFoundError):
     requests = None
+    _RequestException = Exception
 
 try:
     torch = importlib.import_module("torch")
@@ -188,7 +192,7 @@ def call_ollama_simulation(
         data = resp.json()
         content = data.get("message", {}).get("content", "")
         return content or "No response from LLM."
-    except requests.exceptions.RequestException as exc:
+    except _RequestException as exc:
         return f"Error calling LLM (request): {exc}"
     except (ValueError, KeyError) as exc:
         return f"LLM response parse error: {exc}"
