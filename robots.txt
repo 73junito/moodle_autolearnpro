@@ -1,0 +1,19 @@
+# robots.txt for autolearnpro.com
+# Allow well-behaved crawlers but hide admin and private endpoints
+
+User-agent: *
+Disallow: /admin/
+Disallow: /login/
+Disallow: /webservice/
+Disallow: /moodledata/
+Disallow: /cache/
+
+# Block Moodle AJAX and dynamic combo endpoints
+Disallow: /lib/ajax/
+Disallow: /theme/yui_combo.php
+
+# Allow everything else
+Allow: /
+
+# Sitemap (uncomment and update if you publish a sitemap)
+# Sitemap: https://autolearnpro.com/sitemap.xml
