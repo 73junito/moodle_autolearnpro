@@ -1,21 +1,15 @@
-"""Automotive Lab Simulation WebUI extension.
+"""Minimal Automotive Lab Simulation module suitable for editors.
 
-Provides a compact simulation engine for automotive troubleshooting exercises.
-This extension uses a local Ollama LLM (via HTTP) to generate realistic
-test results. The file includes lightweight fallbacks so editors without
-the WebUI dependencies can open it safely.
+This module keeps a tiny surface area so editors and linters can import
+it without requiring the full WebUI or Gradio runtime.
 """
-
-# Pylint: allow long descriptive strings and compact UI builders in this
-# file; the UI wiring tends to produce long lines and many small locals.
-# Also allow the optional-import module variables to remain lowercase.
-# pylint: disable=C0301,R0914,R0915,C0103
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 import importlib
 import time
-# Optional third-party modules (fallback to None for editors that lack them)
+
+# Optional runtime imports used when available
 try:
     gr = importlib.import_module("gradio")
 except (ImportError, ModuleNotFoundError):
@@ -34,58 +28,35 @@ try:
     torch = importlib.import_module("torch")
 except (ImportError, ModuleNotFoundError):
     torch = None
-
 try:
     scripts = importlib.import_module("modules.scripts")
 except (ImportError, ModuleNotFoundError):
-    # Minimal local stub so the file can be linted/edited outside WebUI.
-    class _StubScripts:
-        """Local stub for the host `modules.scripts` API when not present.
-
-        This provides a minimal `Script` base class with the attributes
-        the extension expects so editors and linters can import the file
-        without requiring the full WebUI runtime.
+    class _StubScripts:  # pylint: disable=too-few-public-methods
+        """Simple stub used when the host `modules.scripts` module is
+        unavailable (editor environments).
         """
 
-        class Script:  # type: ignore
-            """Minimal Script base stub exposing `AlwaysVisible` attribute."""
+        AlwaysVisible = True
 
+        class Script:  # type: ignore # pylint: disable=too-few-public-methods
+            """Minimal Script base so the module can subclass when
+            `modules.scripts` is not present.
+            """
             AlwaysVisible = True
 
     scripts = _StubScripts()
 
-# Configuration
+
 OLLAMA_ENDPOINT = "http://localhost:11434/api/chat"
 OLLAMA_MODEL = "llama3"
 
 
-def detect_cuda_info() -> str:
-    """Report a short summary describing CUDA availability.
-
-    Uses ``torch`` if present; otherwise returns a readable failure string.
-    """
-    if torch is None:
-        return "CUDA: detection failed (torch not available)"
-    try:
-        cuda_available = torch.cuda.is_available()
-        device_name = torch.cuda.get_device_name(0) if cuda_available else "CPU only"
-        return f"CUDA: {'available' if cuda_available else 'not available'} ({device_name})"
-    except (AttributeError, RuntimeError, OSError):
-        return "CUDA: detection failed (torch error)"
-
-
 @dataclass
 class SimulationScenario:
-    """Describe an automotive troubleshooting scenario.
+    """Data describing a training scenario for the automotive lab.
 
-    Attributes:
-        title: short display title
-        vehicle: make/model/engine string
-        symptom_summary: customer complaint or observed symptoms
-        hidden_fault: the true cause (kept internal)
-        notes: optional instructor notes
+    This is intentionally minimal and serializable for tests.
     """
-
     title: str
     vehicle: str
     symptom_summary: str
@@ -95,72 +66,45 @@ class SimulationScenario:
 
 @dataclass
 class SimulationState:
-    """Runtime state for an active simulation instance."""
-
+    """Runtime state container for an active simulation instance."""
     scenario: Optional[SimulationScenario] = None
     history: List[Dict[str, Any]] = field(default_factory=list)
     solved: bool = False
     started_at: float = field(default_factory=time.time)
 
     def reset(self, scenario: SimulationScenario) -> None:
-        """Reset the simulation for a new scenario."""
+        """Reset state for a new scenario."""
         self.scenario = scenario
         self.history = []
         self.solved = False
         self.started_at = time.time()
 
     def add_action(self, action: str, result: str) -> None:
-        """Record a performed action and the LLM's result."""
-        self.history.append({"action": action, "result": result, "timestamp": time.time()})
-
-
-def get_predefined_scenarios() -> Dict[str, SimulationScenario]:
-    """Return a small set of example scenarios keyed by identifier."""
-    return {
-        "no_start_weak_battery": SimulationScenario(
-            title="No-Start – Weak Battery",
-            vehicle="2012 Honda Accord 2.4L",
-            symptom_summary="Customer states: 'Car won't start, just clicking noise.'",
-            hidden_fault="Weak battery with corroded terminals",
-            notes="Classic no-start due to low battery voltage and poor terminal contact.",
-        ),
-        "misfire_ignition_coil": SimulationScenario(
-            title="Engine Misfire – Ignition Coil",
-            vehicle="2018 Ford F150 3.5L EcoBoost",
-            symptom_summary="Customer states: 'Engine misfire and rough idle, check engine light on.'",
-            hidden_fault="Single cylinder misfire caused by faulty ignition coil",
-            notes="Common modern misfire scenario.",
-        ),
-        "overheating_cooling_system": SimulationScenario(
-            title="Overheating – Cooling System",
-            vehicle="2010 Toyota Camry 2.5L",
-            symptom_summary="Customer states: 'Temperature gauge climbs in traffic, coolant smell.'",
-            hidden_fault="Sticking thermostat and low coolant level",
-            notes="Overheating under load/idle with coolant loss.",
-        ),
-    }
-
-
-SYSTEM_PROMPT = (
-    "You are an Automotive Lab Simulation Engine for students.\n"
-    "You are given: a vehicle, a symptom summary, a hidden fault, and the student's previous actions.\n"
-    "When the student performs a diagnostic action, respond with realistic test results.\n"
-    "Do NOT reveal the hidden fault directly. Keep responses concise, technical, and educational."
-)
+        """Record an action and the simulation result."""
+        self.history.append({
+            "action": action,
+            "result": result,
+            "timestamp": time.time(),
+        })
 
 
 def call_ollama_simulation(
     scenario: SimulationScenario,
-    state: SimulationState,
+    _state: SimulationState,
     student_action: str,
-    request_hint: bool = False,
+    _request_hint: bool = False,
 ) -> str:
-    """Compose a prompt and call the local Ollama LLM to simulate results.
+    """Call a local Ollama endpoint to simulate a diagnostic response.
 
-    Returns a short text response or an error message.
+    This function is intentionally small and tolerant of a missing
+    `requests` module so editors can import the file.
     """
+    if requests is None:
+        return "LLM unavailable (requests package not installed)."
+
+    # Build a user-focused prompt and call the local Ollama HTTP API.
     history_text = ""
-    for step in state.history:
+    for step in _state.history:
         history_text += f"- Action: {step['action']}\n  Result: {step['result']}\n"
 
     user_prompt = (
@@ -168,13 +112,10 @@ def call_ollama_simulation(
         f"Symptoms: {scenario.symptom_summary}\n"
         f"Hidden fault (do NOT reveal directly): {scenario.hidden_fault}\n\n"
         f"Student action: {student_action}\n"
-        f"Requesting hint: {'yes' if request_hint else 'no'}\n\n"
+        f"Requesting hint: {'yes' if _request_hint else 'no'}\n\n"
         f"Previous steps:\n{history_text if history_text else 'None yet.'}\n\n"
         "Respond with either a test result/observation or a short hint. Do NOT mention that you are an AI."
     )
-
-    if requests is None:
-        return "LLM unavailable (requests package not installed)."
 
     try:
         resp = requests.post(
@@ -182,7 +123,7 @@ def call_ollama_simulation(
             json={
                 "model": OLLAMA_MODEL,
                 "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "system", "content": "You are a helpful automotive diagnostic tutor."},
                     {"role": "user", "content": user_prompt},
                 ],
             },
@@ -197,15 +138,19 @@ def call_ollama_simulation(
     except (ValueError, KeyError) as exc:
         return f"LLM response parse error: {exc}"
 
-
 class Script(scripts.Script):
-    """Extension script integrating the Automotive Lab simulation into WebUI."""
+    """Lightweight Script class compatible with the host WebUI API.
+
+    The UI surface is intentionally minimal to keep this module importable
+    in non-WebUI environments (editors, linters, tests).
+    """
 
     def title(self) -> str:
-        """Return the extension title shown in the UI list."""
+        """Return a short human-facing title for the script."""
         return "Automotive Lab Simulation Plugin"
 
     def show(self, _is_img2img: bool) -> bool:
+<<<<<<< HEAD
         """Indicate whether the extension UI should be visible.
 
         The argument is provided by the host but not used here.
@@ -374,3 +319,12 @@ class Script(scripts.Script):
             status_box,
             cuda_info,
         ]
+=======
+        """Whether the script should be shown in the current UI mode."""
+        return scripts.AlwaysVisible
+
+    def ui(self, _is_img2img: bool):
+        """Return a minimal UI description; empty when Gradio is absent."""
+        # Minimal UI surface so file imports cleanly in non-WebUI envs.
+        return []
+>>>>>>> 39fa505 (WIP: save tracked changes before syncing main)
