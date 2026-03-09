@@ -1,3 +1,16 @@
+"""Unit tests for the Automotive Lab Simulation extension.
+
+These tests validate `SimulationState` and the
+`call_ollama_simulation` integration path using a mocked
+`requests` module. They are written to run without external
+dependencies.
+"""
+
+# Tests are allowed to omit docstrings on small helper functions and use
+# underscored unused fixtures/args; relax those checks for this test file.
+# pylint: disable=missing-function-docstring,missing-class-docstring
+# pylint: disable=line-too-long,unused-argument
+
 import importlib.util
 import sys
 import types
@@ -6,6 +19,11 @@ from pathlib import Path
 
 
 def load_module_from_path(path: str):
+    """Load the extension module from a filesystem path for testing.
+
+    The function creates a module spec and executes it, returning the
+    loaded module object.
+    """
     spec = importlib.util.spec_from_file_location("automotive_lab_sim", path)
     if spec is None:
         raise ImportError(f"Cannot create a module spec for path: {path!r}")
@@ -18,14 +36,27 @@ def load_module_from_path(path: str):
     return mod
 
 
+<<<<<<< HEAD
 def test_simulation_state_reset_and_add_action():
+=======
+def test_simulation_state_reset_and_add_action(tmp_path):
+    """Verify SimulationState.reset and add_action behaviour."""
+    del tmp_path
+>>>>>>> 39fa505 (WIP: save tracked changes before syncing main)
     repo_root = Path(__file__).resolve().parents[1]
-    mod_path = repo_root / "stable-diffusion-webui" / "extensions" / "automotive-lab-sim" / "scripts" / "automotive_lab_sim.py"
+    mod_dir = (
+        repo_root
+        / "stable-diffusion-webui"
+        / "extensions"
+        / "automotive-lab-sim"
+        / "scripts"
+    )
+    mod_path = mod_dir / "automotive_lab_sim.py"
 
     # Ensure we load with a minimal requests module so import-time checks pass
     fake_requests = types.ModuleType("requests")
 
-    def _post(*args, **kwargs):
+    def _post(*_args, **_kwargs):
         class _R:
             def raise_for_status(self):
                 return None
@@ -58,14 +89,27 @@ def test_simulation_state_reset_and_add_action():
     assert state.history[0]["action"] == "Check battery"
 
 
+<<<<<<< HEAD
 def test_call_ollama_simulation_uses_requests_and_returns_content():
+=======
+def test_call_ollama_simulation_uses_requests_and_returns_content(tmp_path):
+    """Ensure call_ollama_simulation posts to requests and returns content."""
+    del tmp_path
+>>>>>>> 39fa505 (WIP: save tracked changes before syncing main)
     repo_root = Path(__file__).resolve().parents[1]
-    mod_path = repo_root / "stable-diffusion-webui" / "extensions" / "automotive-lab-sim" / "scripts" / "automotive_lab_sim.py"
+    mod_dir = (
+        repo_root
+        / "stable-diffusion-webui"
+        / "extensions"
+        / "automotive-lab-sim"
+        / "scripts"
+    )
+    mod_path = mod_dir / "automotive_lab_sim.py"
 
     # Provide a fake requests module that returns a predictable JSON payload
     fake_requests = types.ModuleType("requests")
 
-    def fake_post(url, json=None, timeout=None):
+    def fake_post(*_args, **_kwargs):
         class Resp:
             def raise_for_status(self):
                 return None
@@ -88,7 +132,12 @@ def test_call_ollama_simulation_uses_requests_and_returns_content():
     )
     state = mod.SimulationState()
 
-    result = mod.call_ollama_simulation(scenario, state, "Inspect clamp", request_hint=False)
+    result = mod.call_ollama_simulation(
+        scenario,
+        state,
+        "Inspect clamp",
+        request_hint=False,
+    )
     assert isinstance(result, str)
     assert "Simulated result" in result
 
